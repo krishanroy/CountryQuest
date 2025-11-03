@@ -1,6 +1,6 @@
 package com.krishan.countryquest.ui.home
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,21 +21,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import com.krishan.countryquest.ui.navigation.Screen
 
 @Composable
-fun HomeScreen(paddingValues: PaddingValues) {
+fun HomeScreen(paddingValues: PaddingValues, navController: NavHostController) {
     val viewModel: HomeViewModel = viewModel()
     val state = viewModel.homeScreenStateFlow.collectAsStateWithLifecycle().value
 
     Column(modifier = Modifier.padding(paddingValues)) {
-        Text(modifier = Modifier.padding(vertical = 16.dp, horizontal = 10.dp), text = "Check out all independent nations!")
+        Text(
+            modifier = Modifier.padding(vertical = 16.dp, horizontal = 10.dp),
+            text = "Check out all independent nations!"
+        )
 
         when (state) {
-            is HomeScreenState.Loading -> Box(modifier = Modifier.fillMaxSize()) {
+            is HomeScreenState.Loading -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
 
-            is HomeScreenState.Error -> Box(modifier = Modifier.fillMaxSize()) {
+            is HomeScreenState.Error -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
                     "Something went wrong!",
                     style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.error)
@@ -48,11 +53,14 @@ fun HomeScreen(paddingValues: PaddingValues) {
                         modifier = Modifier
                             .padding(10.dp)
                             .height(60.dp)
-                            .fillMaxWidth(),
+                            .fillMaxWidth()
+                            .clickable(onClick = {
+                                navController.navigate(Screen.Detail(country = independentCountry))
+                            }),
                         shape = RoundedCornerShape(4.dp)
                     ) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart,) {
-                            Text(modifier = Modifier.padding(12.dp), text = independentCountry.name.common,)
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) {
+                            Text(modifier = Modifier.padding(12.dp), text = independentCountry.name.common)
                         }
                     }
                 }
