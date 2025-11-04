@@ -19,10 +19,11 @@ class HomeViewModel : ViewModel() {
     val homeScreenStateFlow = _homeScreenMutableStateFlow.asStateFlow().onStart {
         getAllIndependentCountries()
     }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000L),
-        initialValue = HomeScreenState.Loading
+        scope = viewModelScope, started = SharingStarted.WhileSubscribed(5_000L), initialValue = HomeScreenState.Loading
     )
+
+    private val _userQuery = MutableStateFlow("")
+    val userQuery = _userQuery.asStateFlow()
 
     fun getAllIndependentCountries() {
         viewModelScope.launch {
@@ -30,8 +31,10 @@ class HomeViewModel : ViewModel() {
             try {
                 val response = client.getAllIndependentCountries()
                 if (response.isSuccessful && response.body() != null) {
-                    _homeScreenMutableStateFlow.value =
-                        HomeScreenState.Success(independentCountries = response.body() ?: emptyList())
+                    _homeScreenMutableStateFlow.value = HomeScreenState.Success(
+                        independentCountries = response.body() ?: emptyList(),
+                        filteredCountries = response.body() ?: emptyList()
+                    )
                 } else {
                     _homeScreenMutableStateFlow.value = HomeScreenState.Error(message = "Something went wrong")
                 }
@@ -42,10 +45,26 @@ class HomeViewModel : ViewModel() {
             }
         }
     }
+
+    fun onQueryChanged(newQuery: String) {
+        _userQuery.value = newQuery
+        val currentState = _homeScreenMutableStateFlow.value
+        if (currentState is HomeScreenState.Success) {
+            val filtered = currentState.independentCountries.filter { restCountry ->
+                restCountry.name.common.equals(newQuery, true) || restCountry.languages.values.any { language ->
+                    language.contains(newQuery, ignoreCase = true)
+                }
+            }
+            _homeScreenMutableStateFlow.value = currentState.copy(filteredCountries = filtered)
+        }
+    }
+
 }
 
 sealed class HomeScreenState {
     data object Loading : HomeScreenState()
-    data class Success(val independentCountries: List<RestCountryDto>) : HomeScreenState()
+    data class Success(val independentCountries: List<RestCountryDto>, val filteredCountries: List<RestCountryDto>) :
+        HomeScreenState()
+
     data class Error(val error: Exception? = null, val message: String?) : HomeScreenState()
 }
