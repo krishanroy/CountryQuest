@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,6 +16,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +30,7 @@ import com.krishan.countryquest.ui.navigation.Screen
 fun HomeScreen(paddingValues: PaddingValues, navController: NavHostController) {
     val viewModel: HomeViewModel = viewModel()
     val state = viewModel.homeScreenStateFlow.collectAsStateWithLifecycle().value
+    val query = viewModel.userQuery.collectAsStateWithLifecycle().value
 
     Column(modifier = Modifier.padding(paddingValues)) {
         Text(
@@ -47,20 +50,34 @@ fun HomeScreen(paddingValues: PaddingValues, navController: NavHostController) {
                 )
             }
 
-            is HomeScreenState.Success -> LazyColumn {
-                items(state.independentCountries) { independentCountry ->
-                    Card(
-                        modifier = Modifier
-                            .padding(10.dp)
-                            .height(60.dp)
-                            .fillMaxWidth()
-                            .clickable(onClick = {
-                                navController.navigate(Screen.Detail(country = independentCountry))
-                            }),
-                        shape = RoundedCornerShape(4.dp)
-                    ) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) {
-                            Text(modifier = Modifier.padding(12.dp), text = independentCountry.name.common)
+            is HomeScreenState.Success -> Column(modifier = Modifier.padding(16.dp)) {
+
+                TextField(
+                    value = query,
+                    onValueChange = viewModel::onQueryChanged,
+                    label = { Text("Search countries") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 10.dp)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                LazyColumn {
+                    items(state.filteredCountries) { independentCountry ->
+                        Card(
+                            modifier = Modifier
+                                .padding(10.dp)
+                                .height(60.dp)
+                                .fillMaxWidth()
+                                .clickable(onClick = {
+                                    navController.navigate(Screen.Detail(country = independentCountry))
+                                }),
+                            shape = RoundedCornerShape(4.dp)
+                        ) {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) {
+                                Text(modifier = Modifier.padding(12.dp), text = independentCountry.name.common)
+                            }
                         }
                     }
                 }
